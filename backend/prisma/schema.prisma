@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  name      String
+  email     String  @unique
+  password  String
+  role      Role    @default(DRIVER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  FLEET_MANAGER
+  DRIVER
+  SAFETY_OFFICER
+  FINANCIAL_ANALYST
+}
+
+model Vehicle {
+  id                  Int     @id @default(autoincrement())
+  registrationNumber  String  @unique
+  name                String
+  type                String
+  maxLoadCapacity     Float
+  odometer            Float   @default(0)
+  acquisitionCost     Float
+  status              VehicleStatus @default(AVAILABLE)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  trips               Trip[]
+  maintenanceLogs     MaintenanceLog[]
+  fuelLogs            FuelLog[]
+  expenses            Expense[]
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  ON_TRIP
+  IN_SHOP
+  RETIRED
+}
+
+model Driver {
+  id                  Int     @id @default(autoincrement())
+  name                String
+  licenseNumber       String  @unique
+  licenseCategory     String
+  licenseExpiryDate   DateTime
+  contactNumber       String
+  safetyScore         Float   @default(0)
+  status              DriverStatus @default(AVAILABLE)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  trips               Trip[]
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_TRIP
+  OFF_DUTY
+  SUSPENDED
+}
+
+model Trip {
+  id                  Int     @id @default(autoincrement())
+  source              String
+  destination         String
+  vehicleId           Int
+  driverId            Int
+  cargoWeight         Float
+  plannedDistance     Float
+  status              TripStatus @default(DRAFT)
+  finalOdometer       Float?
+  fuelConsumed        Float?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  vehicle             Vehicle @relation(fields: [vehicleId], references: [id])
+  driver              Driver  @relation(fields: [driverId], references: [id])
+}
+
+enum TripStatus {
+  DRAFT
+  DISPATCHED
+  COMPLETED
+  CANCELLED
+}
+
+model MaintenanceLog {
+  id                  Int     @id @default(autoincrement())
+  vehicleId           Int
+  description         String
+  cost                Float
+  status              MaintenanceStatus @default(ACTIVE)
+  createdAt           DateTime @default(now())
+  closedAt            DateTime?
+  updatedAt           DateTime @updatedAt
+  
+  vehicle             Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+enum MaintenanceStatus {
+  ACTIVE
+  CLOSED
+}
+
+model FuelLog {
+  id                  Int     @id @default(autoincrement())
+  vehicleId           Int
+  liters              Float
+  cost                Float
+  date                DateTime
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  vehicle             Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+model Expense {
+  id                  Int     @id @default(autoincrement())
+  vehicleId           Int
+  type                String  // 'TOLL', 'OTHER', etc.
+  amount              Float
+  date                DateTime
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  vehicle             Vehicle @relation(fields: [vehicleId], references: [id])
+}
