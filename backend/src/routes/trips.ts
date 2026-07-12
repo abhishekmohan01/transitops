@@ -209,6 +209,18 @@ router.patch(
       const trip = await prisma.trip.findUnique({ where: { id } });
       if (!trip) return sendError(res, 404, "Trip not found");
 
+      // Fetch vehicle to validate odometer
+      const vehicle = await prisma.vehicle.findUnique({ where: { id: trip.vehicleId } });
+      if (!vehicle) return sendError(res, 404, "Vehicle not found");
+
+      if (finalOdometer < vehicle.odometer) {
+        return sendError(
+          res,
+          400,
+          `Final odometer (${finalOdometer}) cannot be less than vehicle's current odometer (${vehicle.odometer})`
+        );
+      }
+
       // State guard: can only complete from DISPATCHED
       if (trip.status !== "DISPATCHED") {
         return sendError(
