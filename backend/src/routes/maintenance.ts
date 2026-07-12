@@ -203,23 +203,42 @@ router.patch(
         });
       }
 
-      // BR-10: Atomic — close log + set vehicle AVAILABLE
-      const [closedLog] = await prisma.$transaction([
-        prisma.maintenanceLog.update({
-          where: { id },
-          data: { status: "CLOSED", closedAt },
-          include: maintenanceInclude,
-        }),
-        prisma.vehicle.update({
-          where: { id: log.vehicleId },
-          data: { status: "AVAILABLE" },
-        }),
-      ]);
+        // Check if there are other ACTIVE maintenance logs for this vehicle
+        const otherActiveLogsCount = await prisma.maintenanceLog.count({
+          where: {
+            vehicleId: log.vehicleId,
+            status: "ACTIVE",
+            id: { not: id } // exclude the one we are currently closing
+          }
+        });
 
-      res.json({
-        message: "Maintenance log closed. Vehicle is now AVAILABLE.",
-        data: closedLog,
-      });
+        // BR-10: Atomic - close log
+        // Only set vehicle to AVAILABLE if no other active logs exist
+        const transactions: any[] = [
+          prisma.maintenanceLog.update({
+            where: { id },
+            data: { status: "CLOSED", closedAt },
+            include: maintenanceInclude,
+          })
+        ];
+
+        if (otherActiveLogsCount === 0) {
+          transactions.push(
+            prisma.vehicle.update({
+              where: { id: log.vehicleId },
+              data: { status: "AVAILABLE" },
+            })
+          );
+        }
+
+        const [closedLog] = await prisma.$transaction(transactions);
+  
+        res.json({
+          message: otherActiveLogsCount === 0
+            ? "Maintenance log closed. Vehicle is now AVAILABLE."
+            : "Maintenance log closed. Vehicle remains IN_SHOP due to other active maintenance tasks.",
+          data: closedLog,
+        });
     } catch (error) {
       next(error);
     }

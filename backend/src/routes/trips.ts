@@ -274,31 +274,41 @@ router.patch(
       const trip = await prisma.trip.findUnique({ where: { id } });
       if (!trip) return sendError(res, 404, "Trip not found");
 
-      // State guard: can only cancel from DISPATCHED
-      if (trip.status !== "DISPATCHED") {
+      // State guard: can only cancel from DRAFT or DISPATCHED
+      if (trip.status !== "DISPATCHED" && trip.status !== "DRAFT") {
         return sendError(
           res,
           409,
-          `Trip cannot be cancelled from "${trip.status}" state. Only DISPATCHED trips can be cancelled.`
+          `Trip cannot be cancelled from "${trip.status}" state. Only DRAFT or DISPATCHED trips can be cancelled.`
         );
       }
 
-      // Atomic transaction: revert all statuses
-      const [updatedTrip] = await prisma.$transaction([
+      const transactions: any[] = [
         prisma.trip.update({
           where: { id },
           data: { status: "CANCELLED" },
           include: tripInclude,
-        }),
-        prisma.vehicle.update({
-          where: { id: trip.vehicleId },
-          data: { status: "AVAILABLE" },
-        }),
-        prisma.driver.update({
-          where: { id: trip.driverId },
-          data: { status: "AVAILABLE" },
-        }),
-      ]);
+        })
+      ];
+
+      // Only revert vehicle/driver status if the trip was actually dispatched
+      if (trip.status === "DISPATCHED") {
+        transactions.push(
+          prisma.vehicle.update({
+            where: { id: trip.vehicleId },
+            data: { status: "AVAILABLE" },
+          })
+        );
+        transactions.push(
+          prisma.driver.update({
+            where: { id: trip.driverId },
+            data: { status: "AVAILABLE" },
+          })
+        );
+      }
+
+      // Atomic transaction: update trip + conditional reverts
+      const [updatedTrip] = await prisma.$transaction(transactions);
 
       res.json({ message: "Trip cancelled successfully", data: updatedTrip });
     } catch (error) {
