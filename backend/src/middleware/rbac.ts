@@ -10,6 +10,10 @@ export const authorize = (...allowedRoles: Role[]) => {
       return sendError(res, 401, "Not authenticated");
     }
 
+    if (user.role === "ADMIN") {
+      return next();
+    }
+
     if (!allowedRoles.includes(user.role)) {
       return sendError(res, 403, "Forbidden: Insufficient permissions");
     }

@@ -19,6 +19,7 @@ const createVehicleSchema = z.object({
   maxLoadCapacity: z.number().positive("Max load capacity must be positive"),
   odometer: z.number().nonnegative("Odometer must be 0 or greater").default(0),
   acquisitionCost: z.number().nonnegative("Acquisition cost must be 0 or greater"),
+  imageUrl: z.string().url().nullish().default(null),
   status: z
     .enum(["AVAILABLE", "ON_TRIP", "IN_SHOP", "RETIRED"])
     .optional()
@@ -32,6 +33,7 @@ const updateVehicleSchema = z.object({
   maxLoadCapacity: z.number().positive().optional(),
   odometer: z.number().nonnegative().optional(),
   acquisitionCost: z.number().nonnegative().optional(),
+  imageUrl: z.string().url().nullish().default(null),
   status: z.enum(["AVAILABLE", "ON_TRIP", "IN_SHOP", "RETIRED"]).optional(),
 });
 

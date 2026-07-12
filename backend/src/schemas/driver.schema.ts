@@ -18,6 +18,8 @@ export const createDriverSchema = z.object({
     .max(100, "Safety score cannot exceed 100")
     .default(100),
   status: z.nativeEnum(DriverStatus).optional().default(DriverStatus.AVAILABLE),
+  imageUrl: z.string().url().nullish().default(null),
+  documentUrl: z.string().url().nullish().default(null),
 });
 
 // Used by PUT /drivers/:id — FLEET_MANAGER full update (all fields optional)
@@ -35,6 +37,8 @@ export const updateDriverSchema = z.object({
   contactNumber: z.string().min(1).optional(),
   safetyScore: z.number().min(0).max(100).optional(),
   status: z.nativeEnum(DriverStatus).optional(),
+  imageUrl: z.string().url().nullish().default(null),
+  documentUrl: z.string().url().nullish().default(null),
 });
 
 // Used by PATCH /drivers/:id/status — FLEET_MANAGER + SAFETY_OFFICER

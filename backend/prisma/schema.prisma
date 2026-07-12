@@ -21,6 +21,7 @@ model User {
 }
 
 enum Role {
+  ADMIN
   FLEET_MANAGER
   DRIVER
   SAFETY_OFFICER
@@ -36,6 +37,7 @@ model Vehicle {
   odometer            Float   @default(0)
   acquisitionCost     Float
   status              VehicleStatus @default(AVAILABLE)
+  imageUrl            String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   
@@ -61,6 +63,8 @@ model Driver {
   contactNumber       String
   safetyScore         Float   @default(0)
   status              DriverStatus @default(AVAILABLE)
+  imageUrl            String?
+  documentUrl         String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   
