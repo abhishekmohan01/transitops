@@ -24,6 +24,14 @@ const createVehicleSchema = z.object({
     .enum(["AVAILABLE", "ON_TRIP", "IN_SHOP", "RETIRED"])
     .optional()
     .default("AVAILABLE"),
+}).refine(data => {
+  if (data.type.toLowerCase() === "van" && data.maxLoadCapacity > 500) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Van maximum load capacity cannot exceed 500 kg",
+  path: ["maxLoadCapacity"]
 });
 
 const updateVehicleSchema = z.object({
@@ -35,6 +43,14 @@ const updateVehicleSchema = z.object({
   acquisitionCost: z.number().nonnegative().optional(),
   imageUrl: z.string().url().nullish().default(null),
   status: z.enum(["AVAILABLE", "ON_TRIP", "IN_SHOP", "RETIRED"]).optional(),
+}).refine(data => {
+  if (data.type && data.type.toLowerCase() === "van" && data.maxLoadCapacity !== undefined && data.maxLoadCapacity > 500) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Van maximum load capacity cannot exceed 500 kg",
+  path: ["maxLoadCapacity"]
 });
 
 const updateVehicleStatusSchema = z.object({

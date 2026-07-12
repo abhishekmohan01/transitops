@@ -10,7 +10,12 @@ export const createDriverSchema = z.object({
     .refine((val) => !isNaN(Date.parse(val)), {
       message: "licenseExpiryDate must be a valid ISO date string",
     })
-    .transform((val) => new Date(val)),
+    .transform((val) => new Date(val))
+    .refine((date) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date >= today;
+    }, { message: "License expiry date must be today or in the future" }),
   contactNumber: z.string().min(1, "Contact number is required"),
   safetyScore: z
     .number()
@@ -33,6 +38,11 @@ export const updateDriverSchema = z.object({
       message: "licenseExpiryDate must be a valid ISO date string",
     })
     .transform((val) => new Date(val))
+    .refine((date) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date >= today;
+    }, { message: "License expiry date must be today or in the future" })
     .optional(),
   contactNumber: z.string().min(1).optional(),
   safetyScore: z.number().min(0).max(100).optional(),

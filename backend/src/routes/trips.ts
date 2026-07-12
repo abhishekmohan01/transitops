@@ -95,13 +95,12 @@ router.post(
     try {
       const data = createTripSchema.parse(req.body);
 
-      // Verify vehicle and driver exist
-      const [vehicle, driver] = await Promise.all([
-        prisma.vehicle.findUnique({ where: { id: data.vehicleId } }),
-        prisma.driver.findUnique({ where: { id: data.driverId } }),
-      ]);
-      if (!vehicle) return sendError(res, 404, `Vehicle with id ${data.vehicleId} not found`);
-      if (!driver) return sendError(res, 404, `Driver with id ${data.driverId} not found`);
+      // Verify vehicle and driver exist, and run all business rule checks
+      await validateTripCreation({
+        vehicleId: data.vehicleId,
+        driverId: data.driverId,
+        cargoWeight: data.cargoWeight,
+      });
 
       const trip = await prisma.trip.create({
         data: {
