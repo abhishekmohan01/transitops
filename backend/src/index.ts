@@ -4,6 +4,8 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import { AppError } from "./utils/errors.js";
 import authRoutes from "./routes/auth.js";
+import driverRoutes from "./routes/drivers.js";
+import tripRoutes from "./routes/trips.js";
 
 dotenv.config();
 
@@ -21,8 +23,8 @@ app.use(express.json())
 app.use("/api/auth", authRoutes);
 // app.use("/api/dashboard", dashboardRoutes);
 // app.use("/api/vehicles", vehicleRoutes);
-// app.use("/api/drivers", driverRoutes);
-// app.use("/api/trips", tripRoutes);
+app.use("/api/drivers", driverRoutes);
+app.use("/api/trips", tripRoutes);
 // app.use("/api/maintenance", maintenanceRoutes);
 // app.use("/api/fuel", fuelRoutes);
 // app.use("/api/expenses", expenseRoutes);

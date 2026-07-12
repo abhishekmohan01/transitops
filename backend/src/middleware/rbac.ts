@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { Role } from "@prisma/client";
 import { sendError } from "../utils/errors.js";
 

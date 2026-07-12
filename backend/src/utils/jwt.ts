@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { AuthPayload } from "../types/index.js";
+import type { AuthPayload } from "../types/index.js";
 import { AppError } from "./errors.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default-secret-fallback";
