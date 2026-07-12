@@ -47,6 +47,7 @@ export function Trips() {
     origin: "",
     destination: "",
     distanceKm: 10,
+    cargoWeight: 0,
     cargoDetails: ""
   });
   
@@ -89,9 +90,9 @@ export function Trips() {
         source: formData.origin,
         destination: formData.destination,
         plannedDistance: Number(formData.distanceKm),
-        cargoWeight: 100
+        cargoWeight: Number(formData.cargoWeight)
       });
-      setFormData({ vehicleId: "", driverId: "", origin: "", destination: "", distanceKm: 10, cargoDetails: "" });
+      setFormData({ vehicleId: "", driverId: "", origin: "", destination: "", distanceKm: 10, cargoWeight: 0, cargoDetails: "" });
       fetchData();
     } catch (err: any) {
       setFormError(err.response?.data?.error || "Error creating trip");
@@ -192,6 +193,11 @@ export function Trips() {
               <div className="space-y-2">
                 <Label>Est. Distance (km)</Label>
                 <Input type="number" required value={formData.distanceKm} onChange={e => setFormData({...formData, distanceKm: e.target.value as any})} />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Cargo Weight (kg)</Label>
+                <Input type="number" required value={formData.cargoWeight} onChange={e => setFormData({...formData, cargoWeight: e.target.value as any})} />
               </div>
               
               <div className="space-y-2">
