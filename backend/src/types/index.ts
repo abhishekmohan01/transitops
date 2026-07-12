@@ -1,5 +1,5 @@
-import { Role } from "@prisma/client";
-import { Request } from "express";
+import type { Role } from "@prisma/client";
+import type { Request } from "express";
 
 export interface AuthPayload {
   userId: number;
