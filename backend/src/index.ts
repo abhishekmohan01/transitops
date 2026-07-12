@@ -12,6 +12,7 @@ import expenseRoutes from "./routes/expenses.js";
 import reportRoutes from "./routes/reports.js";
 import vehicleRoutes from "./routes/vehicles.js";
 import dashboardRoutes from "./routes/dashboard.js";
+import uploadRouter from "./routes/upload.js";
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/fuel", fuelRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/upload", uploadRouter);
 
 
 app.get("/health",(req,res)=>{
