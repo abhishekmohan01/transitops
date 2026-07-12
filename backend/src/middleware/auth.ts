@@ -9,7 +9,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
       return sendError(res, 401, "No token provided or invalid format");
     }
 
-    const token = authHeader.split(" ")[1];
+    const token = authHeader.split(" ")[1]!;
     const decoded = verifyToken(token);
     
     req.user = decoded;

@@ -67,7 +67,7 @@ router.get("/", async (req, res, next) => {
 // ─────────────────────────────────────────────
 router.get("/:id", async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params["id"]!);
     if (isNaN(id)) return sendError(res, 400, "Invalid trip id");
 
     const trip = await prisma.trip.findUnique({
@@ -139,7 +139,7 @@ router.patch(
   authorize("FLEET_MANAGER", "DRIVER"),
   async (req, res, next) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params["id"]!);
       if (isNaN(id)) return sendError(res, 400, "Invalid trip id");
 
       const trip = await prisma.trip.findUnique({ where: { id } });
@@ -201,7 +201,7 @@ router.patch(
   authorize("FLEET_MANAGER", "DRIVER"),
   async (req, res, next) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params["id"]!);
       if (isNaN(id)) return sendError(res, 400, "Invalid trip id");
 
       const { finalOdometer, fuelConsumed } = completeTripSchema.parse(req.body);
@@ -257,7 +257,7 @@ router.patch(
   authorize("FLEET_MANAGER"),
   async (req, res, next) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params["id"]!);
       if (isNaN(id)) return sendError(res, 400, "Invalid trip id");
 
       const trip = await prisma.trip.findUnique({ where: { id } });

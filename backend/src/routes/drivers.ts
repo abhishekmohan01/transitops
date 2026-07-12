@@ -24,7 +24,7 @@ router.get("/", async (req, res, next) => {
     const { status } = req.query;
 
     const drivers = await prisma.driver.findMany({
-      where: status ? { status: status as any } : undefined,
+      where: status ? { status: status as any } : {},
       orderBy: { createdAt: "desc" },
     });
 
@@ -40,7 +40,7 @@ router.get("/", async (req, res, next) => {
 // ─────────────────────────────────────────────
 router.get("/:id", async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params["id"]!);
     if (isNaN(id)) return sendError(res, 400, "Invalid driver id");
 
     const driver = await prisma.driver.findUnique({
@@ -106,7 +106,7 @@ router.put(
   authorize("FLEET_MANAGER"),
   async (req, res, next) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params["id"]!);
       if (isNaN(id)) return sendError(res, 400, "Invalid driver id");
 
       const data = updateDriverSchema.parse(req.body);
@@ -128,7 +128,11 @@ router.put(
         }
       }
 
-      const driver = await prisma.driver.update({ where: { id }, data });
+      // Strip undefined keys — required due to exactOptionalPropertyTypes in tsconfig
+      const updateData = Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== undefined)
+      );
+      const driver = await prisma.driver.update({ where: { id }, data: updateData });
       res.json({ message: "Driver updated successfully", data: driver });
     } catch (error: any) {
       if (error.name === "ZodError") {
@@ -150,7 +154,7 @@ router.patch(
   authorize("FLEET_MANAGER", "SAFETY_OFFICER"),
   async (req, res, next) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params["id"]!);
       if (isNaN(id)) return sendError(res, 400, "Invalid driver id");
 
       const data = updateDriverStatusSchema.parse(req.body);
@@ -167,7 +171,11 @@ router.patch(
         );
       }
 
-      const driver = await prisma.driver.update({ where: { id }, data });
+      // Strip undefined keys — required due to exactOptionalPropertyTypes in tsconfig
+      const updateData = Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== undefined)
+      );
+      const driver = await prisma.driver.update({ where: { id }, data: updateData });
       res.json({ message: "Driver status updated successfully", data: driver });
     } catch (error: any) {
       if (error.name === "ZodError") {
@@ -190,7 +198,7 @@ router.delete(
   authorize("FLEET_MANAGER"),
   async (req, res, next) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params["id"]!);
       if (isNaN(id)) return sendError(res, 400, "Invalid driver id");
 
       const existing = await prisma.driver.findUnique({ where: { id } });
