@@ -10,6 +10,8 @@ import maintenanceRoutes from "./routes/maintenance.js";
 import fuelRoutes from "./routes/fuel.js";
 import expenseRoutes from "./routes/expenses.js";
 import reportRoutes from "./routes/reports.js";
+import vehicleRoutes from "./routes/vehicles.js";
+import dashboardRoutes from "./routes/dashboard.js";
 
 dotenv.config();
 
@@ -25,8 +27,8 @@ app.use(express.json())
 
 
 app.use("/api/auth", authRoutes);
-// app.use("/api/dashboard", dashboardRoutes);
-// app.use("/api/vehicles", vehicleRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/drivers", driverRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/maintenance", maintenanceRoutes);

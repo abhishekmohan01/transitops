@@ -27,6 +27,10 @@ export const completeTripSchema = z.object({
   fuelConsumed: z
     .number({ required_error: "fuelConsumed is required" })
     .positive("Fuel consumed must be greater than 0"),
+  revenue: z
+    .number()
+    .nonnegative("Revenue must be 0 or greater")
+    .optional(),
 });
 
 export type CreateTripInput = z.infer<typeof createTripSchema>;
