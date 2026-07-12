@@ -6,6 +6,9 @@ import { Input } from "../components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Label } from "../components/ui/label";
+import { hasPermission, getRequiredRolesText, ROLES } from "../lib/rbac";
+import { useAuth } from "../contexts/AuthContext";
+import { Lock } from "lucide-react";
 
 interface Vehicle {
   id: number;
@@ -20,9 +23,12 @@ interface Vehicle {
 }
 
 export function Vehicles() {
+  const { user } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  const canManageFleet = hasPermission(user?.role, [ROLES.FLEET_MANAGER]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -101,7 +107,10 @@ export function Vehicles() {
         <h1 className="text-3xl font-bold tracking-tight">Vehicle Registry</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>+ Add Vehicle</Button>
+            <Button disabled={!canManageFleet} title={!canManageFleet ? `Locked. Allowed roles: ${getRequiredRolesText([ROLES.FLEET_MANAGER])}` : undefined}>
+              {!canManageFleet && <Lock className="w-4 h-4 mr-2" />}
+              + Add Vehicle
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

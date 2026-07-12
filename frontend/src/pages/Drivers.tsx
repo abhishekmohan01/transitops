@@ -7,7 +7,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { MoreHorizontal, UserPlus } from "lucide-react";
+import { MoreHorizontal, UserPlus, Lock } from "lucide-react";
+import { hasPermission, getRequiredRolesText, ROLES } from "../lib/rbac";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Driver {
   id: number;
@@ -18,8 +20,11 @@ interface Driver {
 }
 
 export function Drivers() {
+  const { user } = useAuth();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const canManageDrivers = hasPermission(user?.role, [ROLES.FLEET_MANAGER]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -105,8 +110,8 @@ export function Drivers() {
         <h1 className="text-3xl font-bold tracking-tight">Drivers Management</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="mr-2 h-4 w-4" />
+            <Button disabled={!canManageDrivers} title={!canManageDrivers ? `Locked. Allowed roles: ${getRequiredRolesText([ROLES.FLEET_MANAGER])}` : undefined}>
+              {!canManageDrivers ? <Lock className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
               Add Driver
             </Button>
           </DialogTrigger>
@@ -186,8 +191,8 @@ export function Drivers() {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
+                        <Button variant="ghost" className="h-8 w-8 p-0" disabled={!canManageDrivers} title={!canManageDrivers ? `Locked. Allowed roles: ${getRequiredRolesText([ROLES.FLEET_MANAGER])}` : undefined}>
+                          {!canManageDrivers ? <Lock className="h-4 w-4 text-muted-foreground/50" /> : <MoreHorizontal className="h-4 w-4" />}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">

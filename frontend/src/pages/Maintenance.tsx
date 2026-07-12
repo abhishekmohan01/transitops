@@ -6,8 +6,10 @@ import { Input } from "../components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Label } from "../components/ui/label";
-import { Wrench } from "lucide-react";
+import { Wrench, Lock } from "lucide-react";
 import axios from "axios";
+import { hasPermission, getRequiredRolesText, ROLES } from "../lib/rbac";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Vehicle {
   id: number;
@@ -25,10 +27,13 @@ interface MaintenanceLog {
 }
 
 export function Maintenance() {
+  const { user } = useAuth();
   const [logs, setLogs] = useState<MaintenanceLog[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const canManageMaintenance = hasPermission(user?.role, [ROLES.FLEET_MANAGER]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -91,8 +96,8 @@ export function Maintenance() {
         <h1 className="text-3xl font-bold tracking-tight">Maintenance</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Wrench className="mr-2 h-4 w-4" />
+            <Button disabled={!canManageMaintenance} title={!canManageMaintenance ? `Locked. Allowed roles: ${getRequiredRolesText([ROLES.FLEET_MANAGER])}` : undefined}>
+              {!canManageMaintenance ? <Lock className="mr-2 h-4 w-4" /> : <Wrench className="mr-2 h-4 w-4" />}
               Log Maintenance
             </Button>
           </DialogTrigger>
@@ -160,7 +165,8 @@ export function Maintenance() {
                   </TableCell>
                   <TableCell>
                     {log.status === "ACTIVE" && (
-                      <Button size="sm" variant="outline" onClick={() => handleCloseMaintenance(log.id)}>
+                      <Button size="sm" variant="outline" disabled={!canManageMaintenance} title={!canManageMaintenance ? `Locked. Allowed roles: ${getRequiredRolesText([ROLES.FLEET_MANAGER])}` : undefined} onClick={() => handleCloseMaintenance(log.id)}>
+                        {!canManageMaintenance && <Lock className="mr-1 h-3 w-3" />}
                         Mark Closed
                       </Button>
                     )}

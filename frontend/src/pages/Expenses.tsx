@@ -5,8 +5,10 @@ import { Input } from "../components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { Label } from "../components/ui/label";
-import { Fuel } from "lucide-react";
+import { Fuel, Lock } from "lucide-react";
 import axios from "axios";
+import { hasPermission, getRequiredRolesText, ROLES } from "../lib/rbac";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Vehicle {
   id: number;
@@ -24,10 +26,13 @@ interface FuelLog {
 }
 
 export function Expenses() {
+  const { user } = useAuth();
   const [logs, setLogs] = useState<FuelLog[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const canLogFuel = hasPermission(user?.role, [ROLES.FLEET_MANAGER, ROLES.DRIVER]);
 
   const [formData, setFormData] = useState({
     vehicleId: "",
@@ -80,8 +85,8 @@ export function Expenses() {
         <h1 className="text-3xl font-bold tracking-tight">Fuel Logs</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Fuel className="mr-2 h-4 w-4" />
+            <Button disabled={!canLogFuel} title={!canLogFuel ? `Locked. Allowed roles: ${getRequiredRolesText([ROLES.FLEET_MANAGER, ROLES.DRIVER])}` : undefined}>
+              {!canLogFuel ? <Lock className="mr-2 h-4 w-4" /> : <Fuel className="mr-2 h-4 w-4" />}
               Log Fuel Purchase
             </Button>
           </DialogTrigger>

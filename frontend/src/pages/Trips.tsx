@@ -6,7 +6,9 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
-import { MapPin, Navigation, AlertCircle } from "lucide-react";
+import { MapPin, Navigation, AlertCircle, Lock } from "lucide-react";
+import { hasPermission, getRequiredRolesText, ROLES } from "../lib/rbac";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Trip {
   id: number;
@@ -30,10 +32,13 @@ interface Driver {
 }
 
 export function Trips() {
+  const { user } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const canManageTrips = hasPermission(user?.role, [ROLES.FLEET_MANAGER, ROLES.DRIVER]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -194,7 +199,10 @@ export function Trips() {
                 <Input value={formData.cargoDetails} onChange={e => setFormData({...formData, cargoDetails: e.target.value})} />
               </div>
 
-              <Button type="submit" className="w-full mt-4">Dispatch Trip</Button>
+              <Button type="submit" className="w-full mt-4" disabled={!canManageTrips} title={!canManageTrips ? `Locked. Allowed roles: ${getRequiredRolesText([ROLES.FLEET_MANAGER, ROLES.DRIVER])}` : undefined}>
+                {!canManageTrips && <Lock className="mr-2 h-4 w-4" />}
+                Dispatch Trip
+              </Button>
             </form>
           </CardContent>
         </Card>
@@ -235,10 +243,16 @@ export function Trips() {
                   
                   <div className="flex gap-2">
                     {trip.status === "DRAFT" && (
-                      <Button size="sm" onClick={() => handleStartTrip(trip.id)}>Start</Button>
+                      <Button size="sm" disabled={!canManageTrips} title={!canManageTrips ? `Locked. Allowed roles: ${getRequiredRolesText([ROLES.FLEET_MANAGER, ROLES.DRIVER])}` : undefined} onClick={() => handleStartTrip(trip.id)}>
+                        {!canManageTrips && <Lock className="mr-1 h-3 w-3" />}
+                        Start
+                      </Button>
                     )}
                     {trip.status === "DISPATCHED" && (
-                      <Button size="sm" variant="outline" className="text-emerald-500 border-emerald-500 hover:bg-emerald-500/10" onClick={() => setCompleteTripId(trip.id)}>Complete</Button>
+                      <Button size="sm" variant="outline" className="text-emerald-500 border-emerald-500 hover:bg-emerald-500/10" disabled={!canManageTrips} title={!canManageTrips ? `Locked. Allowed roles: ${getRequiredRolesText([ROLES.FLEET_MANAGER, ROLES.DRIVER])}` : undefined} onClick={() => setCompleteTripId(trip.id)}>
+                        {!canManageTrips && <Lock className="mr-1 h-3 w-3" />}
+                        Complete
+                      </Button>
                     )}
                   </div>
                 </div>

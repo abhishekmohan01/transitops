@@ -12,19 +12,21 @@ import {
   Settings,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  Lock
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { hasPermission, getRequiredRolesText, ROLES } from "../lib/rbac";
 
 const navItems = [
-  { label: "Dashboard", path: "/", icon: LayoutDashboard },
-  { label: "Fleet", path: "/vehicles", icon: Truck },
-  { label: "Drivers", path: "/drivers", icon: Users },
-  { label: "Trips", path: "/trips", icon: MapPin },
-  { label: "Maintenance", path: "/maintenance", icon: Wrench },
-  { label: "Fuel & Expenses", path: "/expenses", icon: Fuel },
-  { label: "Analytics", path: "/analytics", icon: BarChart3 },
-  { label: "Settings", path: "/settings", icon: Settings },
+  { label: "Dashboard", path: "/", icon: LayoutDashboard, allowedRoles: [ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.DRIVER, ROLES.SAFETY_OFFICER, ROLES.FINANCIAL_ANALYST] },
+  { label: "Fleet", path: "/vehicles", icon: Truck, allowedRoles: [ROLES.FLEET_MANAGER] },
+  { label: "Drivers", path: "/drivers", icon: Users, allowedRoles: [ROLES.FLEET_MANAGER, ROLES.SAFETY_OFFICER] },
+  { label: "Trips", path: "/trips", icon: MapPin, allowedRoles: [ROLES.FLEET_MANAGER, ROLES.DRIVER] },
+  { label: "Maintenance", path: "/maintenance", icon: Wrench, allowedRoles: [ROLES.FLEET_MANAGER] },
+  { label: "Fuel & Expenses", path: "/expenses", icon: Fuel, allowedRoles: [ROLES.FLEET_MANAGER, ROLES.FINANCIAL_ANALYST] },
+  { label: "Analytics", path: "/analytics", icon: BarChart3, allowedRoles: [ROLES.FLEET_MANAGER, ROLES.FINANCIAL_ANALYST, ROLES.SAFETY_OFFICER] },
+  { label: "Settings", path: "/settings", icon: Settings, allowedRoles: [] }, // Settings only for ADMIN
 ];
 
 export function AppLayout() {
@@ -47,6 +49,21 @@ export function AppLayout() {
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const allowed = hasPermission(user?.role, item.allowedRoles);
+            
+            if (!allowed) {
+              const requiredRoles = getRequiredRolesText(item.allowedRoles);
+              return (
+                <div key={item.path} className="flex items-center justify-between px-3 py-2 rounded-md transition-colors text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed bg-muted/30" title={`Locked. Allowed roles: ${requiredRoles}`}>
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-4 h-4" />
+                    {item.label}
+                  </div>
+                  <Lock className="w-3 h-3" />
+                </div>
+              );
+            }
+
             return (
               <NavLink
                 key={item.path}
