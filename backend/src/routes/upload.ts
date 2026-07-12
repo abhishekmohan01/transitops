@@ -1,10 +1,14 @@
 import { Router } from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+import { authenticate } from "../middleware/auth.js";
 import { authorize } from "../middleware/rbac.js";
 import { sendError } from "../utils/errors.js";
 
 const router = Router();
+
+// Require authentication for all upload routes
+router.use(authenticate);
 
 // Configure cloudinary with env variables
 cloudinary.config({
