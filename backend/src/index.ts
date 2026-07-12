@@ -9,6 +9,7 @@ import tripRoutes from "./routes/trips.js";
 import maintenanceRoutes from "./routes/maintenance.js";
 import fuelRoutes from "./routes/fuel.js";
 import expenseRoutes from "./routes/expenses.js";
+import reportRoutes from "./routes/reports.js";
 
 dotenv.config();
 
@@ -31,7 +32,7 @@ app.use("/api/trips", tripRoutes);
 app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/fuel", fuelRoutes);
 app.use("/api/expenses", expenseRoutes);
-// app.use("/api/reports", reportRoutes);
+app.use("/api/reports", reportRoutes);
 
 
 app.get("/health",(req,res)=>{
