@@ -204,7 +204,7 @@ router.patch(
       const id = parseInt(req.params["id"]!);
       if (isNaN(id)) return sendError(res, 400, "Invalid trip id");
 
-      const { finalOdometer, fuelConsumed } = completeTripSchema.parse(req.body);
+      const { finalOdometer, fuelConsumed, revenue } = completeTripSchema.parse(req.body);
 
       const trip = await prisma.trip.findUnique({ where: { id } });
       if (!trip) return sendError(res, 404, "Trip not found");
@@ -234,7 +234,7 @@ router.patch(
       const [updatedTrip] = await prisma.$transaction([
         prisma.trip.update({
           where: { id },
-          data: { status: "COMPLETED", finalOdometer, fuelConsumed },
+          data: { status: "COMPLETED", finalOdometer, fuelConsumed, ...(revenue !== undefined ? { revenue } : {}) },
           include: tripInclude,
         }),
         prisma.vehicle.update({
