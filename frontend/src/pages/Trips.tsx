@@ -49,7 +49,7 @@ export function Trips() {
       const [tripsRes, vehiclesRes, driversRes] = await Promise.all([
         api.get("/trips"),
         api.get("/vehicles?status=AVAILABLE"),
-        api.get("/drivers?status=ON_DUTY")
+        api.get("/drivers?status=AVAILABLE")
       ]);
       setTrips(tripsRes.data.data);
       setVehicles(vehiclesRes.data.data);
@@ -69,10 +69,12 @@ export function Trips() {
     e.preventDefault();
     try {
       await api.post("/trips", {
-        ...formData,
         vehicleId: Number(formData.vehicleId),
         driverId: Number(formData.driverId),
-        distanceKm: Number(formData.distanceKm)
+        source: formData.origin,
+        destination: formData.destination,
+        plannedDistance: Number(formData.distanceKm),
+        cargoWeight: 100 // Default value since UI provides cargoDetails string instead of weight
       });
       setFormData({ vehicleId: "", driverId: "", origin: "", destination: "", distanceKm: 10, cargoDetails: "" });
       fetchData();
@@ -130,7 +132,7 @@ export function Trips() {
                   onChange={(e) => setFormData({...formData, driverId: e.target.value})}
                   required
                 >
-                  <option value="" disabled>Select On Duty Driver</option>
+                  <option value="" disabled>Select Available Driver</option>
                   {drivers.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
