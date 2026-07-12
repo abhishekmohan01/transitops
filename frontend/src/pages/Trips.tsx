@@ -5,16 +5,17 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { MapPin, Navigation } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { MapPin, Navigation, AlertCircle } from "lucide-react";
 
 interface Trip {
   id: number;
   vehicleId: number;
   driverId: number;
-  origin: string;
+  source: string;
   destination: string;
-  status: "PENDING" | "EN_ROUTE" | "COMPLETED" | "CANCELLED";
-  distanceKm: number;
+  status: "DRAFT" | "DISPATCHED" | "COMPLETED" | "CANCELLED";
+  plannedDistance: number;
 }
 
 interface Vehicle {
@@ -43,6 +44,14 @@ export function Trips() {
     distanceKm: 10,
     cargoDetails: ""
   });
+  
+  const [formError, setFormError] = useState("");
+  const [completeTripId, setCompleteTripId] = useState<number | null>(null);
+  const [completeData, setCompleteData] = useState({
+    finalOdometer: "",
+    fuelConsumed: "",
+    revenue: ""
+  });
 
   const fetchData = async () => {
     try {
@@ -67,6 +76,7 @@ export function Trips() {
 
   const handleDispatch = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
     try {
       await api.post("/trips", {
         vehicleId: Number(formData.vehicleId),
@@ -74,21 +84,40 @@ export function Trips() {
         source: formData.origin,
         destination: formData.destination,
         plannedDistance: Number(formData.distanceKm),
-        cargoWeight: 100 // Default value since UI provides cargoDetails string instead of weight
+        cargoWeight: 100
       });
       setFormData({ vehicleId: "", driverId: "", origin: "", destination: "", distanceKm: 10, cargoDetails: "" });
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.error || "Error creating trip");
+      setFormError(err.response?.data?.error || "Error creating trip");
     }
   };
 
-  const updateStatus = async (id: number, status: string) => {
+  const handleStartTrip = async (id: number) => {
+    setFormError("");
     try {
-      await api.patch(`/trips/${id}/status`, { status });
+      await api.patch(`/trips/${id}/dispatch`);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.error || "Error updating trip");
+      setFormError(err.response?.data?.error || "Error starting trip");
+    }
+  };
+
+  const submitCompleteTrip = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+    if (!completeTripId) return;
+    try {
+      await api.patch(`/trips/${completeTripId}/complete`, {
+        finalOdometer: Number(completeData.finalOdometer),
+        fuelConsumed: Number(completeData.fuelConsumed),
+        revenue: Number(completeData.revenue)
+      });
+      setCompleteTripId(null);
+      setCompleteData({ finalOdometer: "", fuelConsumed: "", revenue: "" });
+      fetchData();
+    } catch (err: any) {
+      setFormError(err.response?.data?.error || "Error completing trip");
     }
   };
 
@@ -108,6 +137,12 @@ export function Trips() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto">
+            {formError && (
+              <div className="mb-4 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                {formError}
+              </div>
+            )}
             <form onSubmit={handleDispatch} className="space-y-4">
               <div className="space-y-2">
                 <Label>Vehicle</Label>
@@ -172,20 +207,20 @@ export function Trips() {
           <CardContent className="flex-1 overflow-y-auto space-y-4">
             {loading ? (
               <div className="text-center p-4">Loading...</div>
-            ) : trips.filter(t => t.status === "PENDING" || t.status === "EN_ROUTE").length === 0 ? (
+            ) : trips.filter(t => t.status === "DRAFT" || t.status === "DISPATCHED").length === 0 ? (
               <div className="text-center p-8 text-muted-foreground border-2 border-dashed border-border rounded-lg">
                 No active trips
               </div>
             ) : (
-              trips.filter(t => t.status === "PENDING" || t.status === "EN_ROUTE").map(trip => (
+              trips.filter(t => t.status === "DRAFT" || t.status === "DISPATCHED").map(trip => (
                 <div key={trip.id} className="bg-background p-4 rounded-lg border border-border shadow-sm flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-semibold text-lg">TRP-{trip.id}</span>
-                      <Badge variant={trip.status === "EN_ROUTE" ? "default" : "secondary"}>
+                      <Badge variant={trip.status === "DISPATCHED" ? "default" : "secondary"}>
                         {trip.status.replace("_", " ")}
                       </Badge>
-                      {trip.status === "EN_ROUTE" && (
+                      {trip.status === "DISPATCHED" && (
                         <span className="relative flex h-3 w-3 ml-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
@@ -194,16 +229,16 @@ export function Trips() {
                     </div>
                     <div className="text-sm text-muted-foreground flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
-                      {trip.origin} <span className="mx-1">→</span> {trip.destination}
+                      {trip.source} <span className="mx-1">→</span> {trip.destination}
                     </div>
                   </div>
                   
                   <div className="flex gap-2">
-                    {trip.status === "PENDING" && (
-                      <Button size="sm" onClick={() => updateStatus(trip.id, "EN_ROUTE")}>Start</Button>
+                    {trip.status === "DRAFT" && (
+                      <Button size="sm" onClick={() => handleStartTrip(trip.id)}>Start</Button>
                     )}
-                    {trip.status === "EN_ROUTE" && (
-                      <Button size="sm" variant="outline" className="text-emerald-500 border-emerald-500 hover:bg-emerald-500/10" onClick={() => updateStatus(trip.id, "COMPLETED")}>Complete</Button>
+                    {trip.status === "DISPATCHED" && (
+                      <Button size="sm" variant="outline" className="text-emerald-500 border-emerald-500 hover:bg-emerald-500/10" onClick={() => setCompleteTripId(trip.id)}>Complete</Button>
                     )}
                   </div>
                 </div>
@@ -212,6 +247,35 @@ export function Trips() {
           </CardContent>
         </Card>
       </div>
+      
+      <Dialog open={!!completeTripId} onOpenChange={(open) => !open && setCompleteTripId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Complete Trip TRP-{completeTripId}</DialogTitle>
+          </DialogHeader>
+          {formError && (
+            <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              {formError}
+            </div>
+          )}
+          <form onSubmit={submitCompleteTrip} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Final Odometer Reading</Label>
+              <Input type="number" required value={completeData.finalOdometer} onChange={e => setCompleteData({...completeData, finalOdometer: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Fuel Consumed (Liters)</Label>
+              <Input type="number" required value={completeData.fuelConsumed} onChange={e => setCompleteData({...completeData, fuelConsumed: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Total Revenue ($)</Label>
+              <Input type="number" required value={completeData.revenue} onChange={e => setCompleteData({...completeData, revenue: e.target.value})} />
+            </div>
+            <Button type="submit" className="w-full">Submit & Complete</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
