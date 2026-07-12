@@ -114,6 +114,15 @@ router.put(
       const existing = await prisma.driver.findUnique({ where: { id } });
       if (!existing) return sendError(res, 404, "Driver not found");
 
+      // Guard: ON_TRIP is managed exclusively by trip dispatch
+      if (data.status === "ON_TRIP") {
+        return sendError(
+          res,
+          400,
+          "Driver status cannot be manually set to ON_TRIP. Use the trip dispatch endpoint."
+        );
+      }
+
       // If licenseNumber is being changed, ensure uniqueness
       if (data.licenseNumber && data.licenseNumber !== existing.licenseNumber) {
         const conflict = await prisma.driver.findUnique({
@@ -204,15 +213,15 @@ router.delete(
       const existing = await prisma.driver.findUnique({ where: { id } });
       if (!existing) return sendError(res, 404, "Driver not found");
 
-      // Guard: prevent deletion if driver is currently on an active trip
-      const activeTrip = await prisma.trip.findFirst({
-        where: { driverId: id, status: "DISPATCHED" },
+      // Guard: prevent deletion if driver has any trip history
+      const tripCount = await prisma.trip.count({
+        where: { driverId: id },
       });
-      if (activeTrip) {
+      if (tripCount > 0) {
         return sendError(
           res,
           409,
-          "Cannot delete driver who is currently on an active trip. Complete or cancel the trip first."
+          "Cannot delete driver with existing trip history."
         );
       }
 

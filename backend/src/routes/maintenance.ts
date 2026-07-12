@@ -105,6 +105,15 @@ router.post(
         );
       }
 
+      // Guard: cannot open maintenance on a vehicle currently ON_TRIP
+      if (vehicle.status === "ON_TRIP") {
+        return sendError(
+          res,
+          409,
+          "Cannot open a maintenance record for a vehicle that is currently on a trip. Complete or cancel the trip first."
+        );
+      }
+
       // Guard: no duplicate active maintenance records
       const existingActive = await prisma.maintenanceLog.findFirst({
         where: { vehicleId: data.vehicleId, status: "ACTIVE" },
